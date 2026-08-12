@@ -1,0 +1,42 @@
+# ----------------------------------------------------------------
+# Subs
+
+# The leading "subs" marks a sub, followed by the sub name. Here "popular" is the default sub
+# presented as Reddit's home page
+[subs."popular"]
+sort = "best" # Or hot, new, top, rising
+
+# A subreddit with time interval applied (only available for "top" sorting)
+[subs."worldnews"]
+sort = "top"
+top_interval = "hour" # Or day, week, month, year, all
+
+# A subreddit which uses default values ("best" sorting)
+[subs."programming"]
+
+# Combine multiple sub
+[subs."programming+ProgrammerHumor"]
+
+# ----------------------------------------------------------------
+# Users
+
+# The leading "users" marks a user, followed by the username
+[users."EpocDotFr"]
+filter = "submitted" # Or comments
+
+# A user with time interval applied on comments (only available for "top" sorting). Also applicaable for submissions
+[users."ILoveBeer"]
+filter = "comments"
+sort = "top" # Or hot, new
+top_interval = "hour" # Or day, week, month, year, all
+
+# A user which uses default values ("submitted" filter, "new" sorting)
+[users."BugHunter"]
+
+# ----------------------------------------------------------------
+# Domains
+
+# The leading "domains" marks a domain, followed by the domain name
+[domains."epoc.fr"]
+sort = "hot" # Or new, rising, controversial, top
+top_interval = "hour" # Or day, week, month, year, all
