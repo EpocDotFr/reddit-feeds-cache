@@ -21,17 +21,17 @@ top_interval = "hour" # Or day, week, month, year, all
 # Users
 
 # The leading "users" marks a user, followed by the username
-[users."EpocDotFr"]
+[users."AutoModerator"]
 filter = "submitted" # Or comments
 
-# A user with time interval applied on comments (only available for "top" sorting). Also applicaable for submissions
-[users."ILoveBeer"]
+# A user with time interval applied on comments (only available for "top" sorting)
+[users."ilovebeer"]
 filter = "comments"
-sort = "top" # Or hot, new
+sort = "top" # Or hot, new. Also applicable for "submitted" filter
 top_interval = "hour" # Or day, week, month, year, all
 
 # A user which uses default values ("submitted" filter, "new" sorting)
-[users."BugHunter"]
+[users."bughunter"]
 
 # ----------------------------------------------------------------
 # Domains

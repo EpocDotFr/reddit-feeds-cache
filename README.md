@@ -3,7 +3,7 @@
 We're all tired of Reddit's enshittification. Every month, Reddit is increasingly turning into a data silo, just like
 Twitter, Facebook or Digg before it. One day, not a single byte of data will be able to quit Reddit without any form of
 authentication. For us open data lovers, Atom feeds are still provided — for now, although these have been severely
-rate-limited in June 2026 (one request per minute. Yes, *PER MINUTE*).
+rate-limited since June 2026 (one request per minute. Yes, *PER MINUTE*).
 
 So I created this simple script. I want to keep getting updates on things I find interesting without having to visit
 Reddit every day — all while staying within their darn rate limit. I do not want to create an account; I do not want to
@@ -48,3 +48,7 @@ You can then subscribe to these feeds using your usual feed reader. They are sav
   - Domains: `https://your.site/domain/{domain name}.atom`
 
 Plain old static files: that's all we need.
+
+## TODO
+
+  - [ ] Allow to define default `sort`, `top_interval` and `filter` values
