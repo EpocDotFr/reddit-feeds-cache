@@ -45,7 +45,7 @@ You can then subscribe to these feeds using your usual feed reader. They are sav
 
   - Subs: `https://your.site/subs/{name}.atom`
   - Users: `https://your.site/users/{username}.atom`
-  - Domains: `https://your.site/domain/{domain name}.atom`
+  - Domains: `https://your.site/domains/{domain name}.atom`
 
 Plain old static files: that's all we need.
 
