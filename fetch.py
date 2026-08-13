@@ -62,12 +62,20 @@ def load_config() -> Dict[str, Any]:
 def fetch_feeds(config: Dict[str, Any]) -> None:
     logging.info('Fetching feeds...')
 
-    fetch_subs_feed(config.get('subs', {}))
-    fetch_users_feed(config.get('users', {}))
-    fetch_domains_feed(config.get('domains', {}))
+    defaults = {
+        'filter': config.get('defaults', {}).get('filter', 'submitted'),
+        'sort': config.get('defaults', {}).get('sort', 'best'),
+        'top_interval': config.get('defaults', {}).get('top_interval', 'day'),
+    }
+
+    fetch_subs_feed(config.get('subs', {}), defaults)
+    fetch_users_feed(config.get('users', {}), defaults)
+    fetch_domains_feed(config.get('domains', {}), defaults)
+
+    logging.info('Done.')
 
 
-def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
+def fetch_subs_feed(subs_config: Dict[str, Any], defaults: Dict[str, Any]) -> None:
     if not subs_config:
         return
 
@@ -75,7 +83,7 @@ def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
 
     for sub_name, sub_parameters in subs_config.items():
         try:
-            sort = Sort(sub_parameters.get('sort', Sort.Best))
+            sort = Sort(sub_parameters.get('sort', defaults.get('sort')))
 
             if not sort.valid_for_sub():
                 raise ValueError
@@ -85,7 +93,7 @@ def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
             continue
 
         try:
-            top_interval = TopInterval(sub_parameters.get('top_interval', TopInterval.Hour))
+            top_interval = TopInterval(sub_parameters.get('top_interval', defaults.get('top_interval')))
         except ValueError:
             logging.error(f'{sub_name}: invalid "top_interval" value')
 
@@ -98,7 +106,7 @@ def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
         )
 
 
-def fetch_users_feed(users_config: Dict[str, Any]) -> None:
+def fetch_users_feed(users_config: Dict[str, Any], defaults: Dict[str, Any]) -> None:
     if not users_config:
         return
 
@@ -106,14 +114,14 @@ def fetch_users_feed(users_config: Dict[str, Any]) -> None:
 
     for user_name, user_parameters in users_config.items():
         try:
-            filter_ = UserFilter(user_parameters.get('filter', UserFilter.Submitted))
+            filter_ = UserFilter(user_parameters.get('filter', defaults.get('filter')))
         except ValueError:
             logging.error(f'{user_name}: invalid "filter" value')
 
             continue
 
         try:
-            sort = Sort(user_parameters.get('sort', Sort.Best))
+            sort = Sort(user_parameters.get('sort', defaults.get('sort')))
 
             if not sort.valid_for_user():
                 raise ValueError
@@ -123,7 +131,7 @@ def fetch_users_feed(users_config: Dict[str, Any]) -> None:
             continue
 
         try:
-            top_interval = TopInterval(user_parameters.get('top_interval', TopInterval.Hour))
+            top_interval = TopInterval(user_parameters.get('top_interval', defaults.get('top_interval')))
         except ValueError:
             logging.error(f'{user_name}: invalid "top_interval" value')
 
@@ -136,7 +144,7 @@ def fetch_users_feed(users_config: Dict[str, Any]) -> None:
         )
 
 
-def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
+def fetch_domains_feed(domains_config: Dict[str, Any], defaults: Dict[str, Any]) -> None:
     if not domains_config:
         return
 
@@ -144,7 +152,7 @@ def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
 
     for domain_name, domain_parameters in domains_config.items():
         try:
-            sort = Sort(domain_parameters.get('sort', Sort.Best))
+            sort = Sort(domain_parameters.get('sort', defaults.get('sort')))
 
             if not sort.valid_for_domain():
                 raise ValueError
@@ -154,7 +162,7 @@ def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
             continue
 
         try:
-            top_interval = TopInterval(domain_parameters.get('top_interval', TopInterval.Hour))
+            top_interval = TopInterval(domain_parameters.get('top_interval', defaults.get('top_interval')))
         except ValueError:
             logging.error(f'{domain_name}: invalid "top_interval" value')
 

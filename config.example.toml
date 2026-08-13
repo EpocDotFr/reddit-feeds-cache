@@ -1,4 +1,12 @@
 # ----------------------------------------------------------------
+# Defaults
+
+[defaults]
+filter = "submitted" # Default user filter. Other values: comments
+sort = "top" # Default sorting, applies to everything. Other values: hot, new, top, rising
+top_interval = "day" # Default time interval for "top" sorting. Other values: day, week, month, year, all
+
+# ----------------------------------------------------------------
 # Subs
 
 # The leading "subs" marks a sub, followed by the sub name. Here "popular" is the default sub
@@ -11,7 +19,7 @@ sort = "best" # Or hot, new, top, rising
 sort = "top"
 top_interval = "hour" # Or day, week, month, year, all
 
-# A subreddit which uses default values ("best" sorting)
+# A subreddit which uses default values
 [subs."programming"]
 
 # Combine multiple sub
@@ -30,7 +38,7 @@ filter = "comments"
 sort = "top" # Or hot, new. Also applicable for "submitted" filter
 top_interval = "hour" # Or day, week, month, year, all
 
-# A user which uses default values ("submitted" filter, "new" sorting)
+# A user which uses default values
 [users."bughunter"]
 
 # ----------------------------------------------------------------

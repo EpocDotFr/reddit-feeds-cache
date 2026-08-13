@@ -41,14 +41,14 @@ For example, fetch feeds every two hours:
 0 */2 * * * cd /path/to/the/script && ./fetch.py
 ```
 
-You can then subscribe to these feeds using your usual feed reader. They are saved using the following path patterns:
+Of course, don't run the scheduled job too close together: remember it'll take *one whole minute* to download *each*
+feed. So given you want to subscribe to 15 subs, that will take a whopping 15 minutes.
+
+You can then subscribe to these feeds using your usual feed reader. They are saved using the following path patterns
+(remember it's served from the `public` folder):
 
   - Subs: `https://your.site/subs/{name}.atom`
   - Users: `https://your.site/users/{username}.atom`
   - Domains: `https://your.site/domains/{domain name}.atom`
 
 Plain old static files: that's all we need.
-
-## TODO
-
-  - [ ] Allow to define default `sort`, `top_interval` and `filter` values
