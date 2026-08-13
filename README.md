@@ -63,4 +63,4 @@ You can then subscribe to these feeds using your usual feed reader. They are sav
 ### Generate OPML file
 
 You can generate an OPML file so you can subscribe to all of the feeds at once: `./fetch.py --opml`. It's saved in
-`public/feeds.opml`.
+`public/feeds.opml`. Especially useful if your feed reader supports dynamic OPML subscribing.
