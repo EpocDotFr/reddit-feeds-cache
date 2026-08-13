@@ -82,7 +82,9 @@ def load_config() -> Dict[str, Any]:
             continue
 
         try:
-            sub_parameters['top_interval'] = TopInterval(sub_parameters.get('top_interval', defaults.get('top_interval')))
+            sub_parameters['top_interval'] = TopInterval(
+                sub_parameters.get('top_interval', defaults.get('top_interval'))
+            )
         except ValueError:
             logging.error(f'{sub_name}: invalid "top_interval" value, this sub will be ignored')
 
@@ -113,7 +115,9 @@ def load_config() -> Dict[str, Any]:
             continue
 
         try:
-            user_parameters['top_interval'] = TopInterval(user_parameters.get('top_interval', defaults.get('top_interval')))
+            user_parameters['top_interval'] = TopInterval(
+                user_parameters.get('top_interval', defaults.get('top_interval'))
+            )
         except ValueError:
             logging.error(f'{user_name}: invalid "top_interval" value, this user will be ignored')
 
@@ -135,7 +139,9 @@ def load_config() -> Dict[str, Any]:
             continue
 
         try:
-            domain_parameters['top_interval'] = TopInterval(domain_parameters.get('top_interval', defaults.get('top_interval')))
+            domain_parameters['top_interval'] = TopInterval(
+                domain_parameters.get('top_interval', defaults.get('top_interval'))
+            )
         except ValueError:
             logging.error(f'{domain_name}: invalid "top_interval" value, this domain will be ignored')
 

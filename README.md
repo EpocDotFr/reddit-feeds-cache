@@ -6,8 +6,8 @@ authentication. For us open data lovers, Atom feeds are still provided — for n
 rate-limited since June 2026 (one request per minute. Yes, *PER MINUTE*).
 
 So I created this simple script. I want to keep getting updates on things I find interesting without having to visit
-Reddit every day — all while staying within their ridiculous rate limit. I do not want to create an account; I do not want to
-undergo their ads, nor their new design (yes, there's still old.reddit.com, but its days also are numbered).
+Reddit every day — all while staying within their ridiculous rate limit. I do not want to create an account; I do not
+want to undergo their ads, nor their new design (yes, there's still old.reddit.com, but its days also are numbered).
 
 ## Prerequisites
 
