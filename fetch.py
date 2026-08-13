@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
+from email.utils import format_datetime as datetime_to_rfc2822
 from urllib.request import Request, urlopen
+from xml.etree import ElementTree as etree
 from typing import Dict, Any, Optional
+from argparse import ArgumentParser
 from urllib.parse import urlencode
 from urllib.error import HTTPError
+from datetime import datetime, UTC
 from pathlib import Path
 from time import sleep
 import tomllib
@@ -51,16 +55,12 @@ def load_config() -> Dict[str, Any]:
     logging.info('Loading configuration...')
 
     try:
-        with open(Path(__file__).parent / 'config.example.toml', 'rb') as f:
-            return tomllib.load(f)
+        with open(Path(__file__).parent / 'config.toml', 'rb') as f:
+            config = tomllib.load(f)
     except FileNotFoundError:
         logging.critical('config.toml not found, aborting.')
 
         exit(1)
-
-
-def fetch_feeds(config: Dict[str, Any]) -> None:
-    logging.info('Fetching feeds...')
 
     defaults = {
         'filter': config.get('defaults', {}).get('filter', 'submitted'),
@@ -68,36 +68,103 @@ def fetch_feeds(config: Dict[str, Any]) -> None:
         'top_interval': config.get('defaults', {}).get('top_interval', 'day'),
     }
 
-    fetch_subs_feed(config.get('subs', {}), defaults)
-    fetch_users_feed(config.get('users', {}), defaults)
-    fetch_domains_feed(config.get('domains', {}), defaults)
+    for sub_name, sub_parameters in config.get('subs', {}).items():
+        try:
+            sub_parameters['sort'] = Sort(sub_parameters.get('sort', defaults.get('sort')))
+
+            if not sub_parameters['sort'].valid_for_sub():
+                raise ValueError
+        except ValueError:
+            logging.error(f'{sub_name}: invalid "sort" value, this sub will be ignored')
+
+            del config['subs'][sub_name]
+
+            continue
+
+        try:
+            sub_parameters['top_interval'] = TopInterval(sub_parameters.get('top_interval', defaults.get('top_interval')))
+        except ValueError:
+            logging.error(f'{sub_name}: invalid "top_interval" value, this sub will be ignored')
+
+            del config['subs'][sub_name]
+
+            continue
+
+    for user_name, user_parameters in config.get('users', {}).items():
+        try:
+            user_parameters['filter'] = UserFilter(user_parameters.get('filter', defaults.get('filter')))
+        except ValueError:
+            logging.error(f'{user_name}: invalid "filter" value, this user will be ignored')
+
+            del config['users'][user_name]
+
+            continue
+
+        try:
+            user_parameters['sort'] = Sort(user_parameters.get('sort', defaults.get('sort')))
+
+            if not user_parameters['sort'].valid_for_user():
+                raise ValueError
+        except ValueError:
+            logging.error(f'{user_name}: invalid "sort" value, this user will be ignored')
+
+            del config['users'][user_name]
+
+            continue
+
+        try:
+            user_parameters['top_interval'] = TopInterval(user_parameters.get('top_interval', defaults.get('top_interval')))
+        except ValueError:
+            logging.error(f'{user_name}: invalid "top_interval" value, this user will be ignored')
+
+            del config['users'][user_name]
+
+            continue
+
+    for domain_name, domain_parameters in config.get('domains', {}).items():
+        try:
+            domain_parameters['sort'] = Sort(domain_parameters.get('sort', defaults.get('sort')))
+
+            if not domain_parameters['sort'].valid_for_domain():
+                raise ValueError
+        except ValueError:
+            logging.error(f'{domain_name}: invalid "sort" value, this domain will be ignored')
+
+            del config['domains'][domain_name]
+
+            continue
+
+        try:
+            domain_parameters['top_interval'] = TopInterval(domain_parameters.get('top_interval', defaults.get('top_interval')))
+        except ValueError:
+            logging.error(f'{domain_name}: invalid "top_interval" value, this domain will be ignored')
+
+            del config['domains'][domain_name]
+
+            continue
+
+    return config
+
+
+def fetch_feeds(config: Dict[str, Any]) -> None:
+    logging.info('Fetching feeds...')
+
+    fetch_subs_feed(config.get('subs', {}))
+    fetch_users_feed(config.get('users', {}))
+    fetch_domains_feed(config.get('domains', {}))
 
     logging.info('Done.')
 
 
-def fetch_subs_feed(subs_config: Dict[str, Any], defaults: Dict[str, Any]) -> None:
+def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
     if not subs_config:
         return
 
     logging.info('Subs...')
 
     for sub_name, sub_parameters in subs_config.items():
-        try:
-            sort = Sort(sub_parameters.get('sort', defaults.get('sort')))
-
-            if not sort.valid_for_sub():
-                raise ValueError
-        except ValueError:
-            logging.error(f'{sub_name}: invalid "sort" value')
-
-            continue
-
-        try:
-            top_interval = TopInterval(sub_parameters.get('top_interval', defaults.get('top_interval')))
-        except ValueError:
-            logging.error(f'{sub_name}: invalid "top_interval" value')
-
-            continue
+        sort = sub_parameters['sort']
+        top_interval = sub_parameters['top_interval']
 
         download_feed(
             f'r/{sub_name}/{sort}',
@@ -106,67 +173,38 @@ def fetch_subs_feed(subs_config: Dict[str, Any], defaults: Dict[str, Any]) -> No
         )
 
 
-def fetch_users_feed(users_config: Dict[str, Any], defaults: Dict[str, Any]) -> None:
+def fetch_users_feed(users_config: Dict[str, Any]) -> None:
     if not users_config:
         return
 
     logging.info('Users...')
 
     for user_name, user_parameters in users_config.items():
-        try:
-            filter_ = UserFilter(user_parameters.get('filter', defaults.get('filter')))
-        except ValueError:
-            logging.error(f'{user_name}: invalid "filter" value')
+        filter_ = user_parameters['filter']
+        sort = user_parameters['sort']
+        top_interval = user_parameters['top_interval']
 
-            continue
-
-        try:
-            sort = Sort(user_parameters.get('sort', defaults.get('sort')))
-
-            if not sort.valid_for_user():
-                raise ValueError
-        except ValueError:
-            logging.error(f'{user_name}: invalid "sort" value')
-
-            continue
-
-        try:
-            top_interval = TopInterval(user_parameters.get('top_interval', defaults.get('top_interval')))
-        except ValueError:
-            logging.error(f'{user_name}: invalid "top_interval" value')
-
-            continue
+        query = {
+            'sort': sort,
+            't': str(top_interval) if sort == Sort.Top else None
+        }
 
         download_feed(
             f'user/{user_name}/{filter_}',
             Path('users') / f'{user_name}.atom',
-            {'t': str(top_interval)} if sort == Sort.Top else None
+            query
         )
 
 
-def fetch_domains_feed(domains_config: Dict[str, Any], defaults: Dict[str, Any]) -> None:
+def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
     if not domains_config:
         return
 
     logging.info('Domains...')
 
     for domain_name, domain_parameters in domains_config.items():
-        try:
-            sort = Sort(domain_parameters.get('sort', defaults.get('sort')))
-
-            if not sort.valid_for_domain():
-                raise ValueError
-        except ValueError:
-            logging.error(f'{domain_name}: invalid "sort" value')
-
-            continue
-
-        try:
-            top_interval = TopInterval(domain_parameters.get('top_interval', defaults.get('top_interval')))
-        except ValueError:
-            logging.error(f'{domain_name}: invalid "top_interval" value')
-
-            continue
+        sort = domain_parameters['sort']
+        top_interval = domain_parameters['top_interval']
 
         download_feed(
             f'domains/{domain_name}/{sort}',
@@ -200,8 +238,6 @@ def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] 
             with open(destination, 'wb') as f:
                 f.write(response.read())
     except HTTPError as e:
-        logging.error(e)
-
         if e.status == 429:
             logging.critical('Got rate-limited anyway, aborting dammit.')
 
@@ -212,6 +248,10 @@ def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] 
             return
         elif 'application/atom+xml' not in e.headers.get('Content-Type', ''):
             logging.error('Did not get an Atom file.')
+
+            return
+        else:
+            logging.error(e)
 
             return
 
@@ -225,10 +265,138 @@ def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] 
         exit(1)
 
 
+def generate_opml(config: Dict[str, Any]) -> None:
+    logging.info('Generating OPML...')
+
+    root = etree.Element('opml', version='2.0')
+    head = etree.SubElement(root, 'head')
+
+    etree.SubElement(head, 'title').text = 'Reddit feeds'
+    etree.SubElement(head, 'dateCreated').text = datetime_to_rfc2822(datetime.now(tz=UTC))
+    etree.SubElement(head, 'docs').text = 'http://opml.org/spec2.opml'
+
+    body = etree.SubElement(root, 'body')
+
+    generate_subs_opml(body, config.get('subs', {}))
+    generate_users_opml(body, config.get('users', {}))
+    generate_domains_opml(body, config.get('domains', {}))
+
+    with open(Path(__file__).parent / 'public' / 'feeds.opml', 'wb') as f:
+        etree.ElementTree(root).write(
+            f,
+            encoding='utf-8',
+            xml_declaration=True
+        )
+
+    logging.info('Done.')
+
+
+def generate_subs_opml(body: etree.Element, subs_config: Dict[str, Any]) -> None:
+    if not subs_config:
+        return
+
+    logging.info('Subs...')
+
+    subs = etree.SubElement(body, 'outline')
+    subs.set('text', 'Subs')
+
+    for sub_name, sub_parameters in subs_config.items():
+        sort = sub_parameters['sort']
+        top_interval = sub_parameters['top_interval']
+
+        sub = etree.SubElement(subs, 'outline')
+
+        htmlUrl = f'https://www.reddit.com/r/{sub_name}/{sort}/'
+
+        if sort == Sort.Top:
+            query = {'t': str(top_interval)}
+
+            htmlUrl += f'?{urlencode(query)}'
+
+        sub.set('text', f'r/{sub_name}')
+        sub.set('title', f'r/{sub_name}')
+        sub.set('type', 'atom')
+        sub.set('xmlUrl', f'/subs/{sub_name}.atom')
+        sub.set('htmlUrl', htmlUrl)
+
+
+def generate_users_opml(body: etree.Element, users_config: Dict[str, Any]) -> None:
+    if not users_config:
+        return
+
+    logging.info('Users...')
+
+    users = etree.SubElement(body, 'outline')
+    users.set('text', 'Users')
+
+    for user_name, user_parameters in users_config.items():
+        filter_ = user_parameters['filter']
+        sort = user_parameters['sort']
+        top_interval = user_parameters['top_interval']
+
+        user = etree.SubElement(users, 'outline')
+
+        user.set('text', f'u/{user_name}')
+        user.set('title', f'u/{user_name}')
+        user.set('type', 'atom')
+        user.set('xmlUrl', f'/users/{user_name}.atom')
+
+        query = {
+            'sort': sort,
+            't': str(top_interval) if sort == Sort.Top else None
+        }
+
+        user.set('htmlUrl', f'https://www.reddit.com/user/{user_name}/{filter_}/?{urlencode(query)}')
+
+
+def generate_domains_opml(body: etree.Element, domains_config: Dict[str, Any]) -> None:
+    if not domains_config:
+        return
+
+    logging.info('Domains...')
+
+    domains = etree.SubElement(body, 'outline')
+    domains.set('text', 'Domains')
+
+    for domain_name, domain_parameters in domains_config.items():
+        sort = domain_parameters['sort']
+        top_interval = domain_parameters['top_interval']
+
+        sub = etree.SubElement(domains, 'outline')
+
+        htmlUrl = f'https://www.reddit.com/domains/{domain_name}/{sort}/'
+
+        if sort == Sort.Top:
+            query = {'t': str(top_interval)}
+
+            htmlUrl += f'?{urlencode(query)}'
+
+        sub.set('text', f'domain/{domain_name}')
+        sub.set('title', f'domain/{domain_name}')
+        sub.set('type', 'atom')
+        sub.set('xmlUrl', f'/domains/{domain_name}.atom')
+        sub.set('htmlUrl', htmlUrl)
+
+
 def run() -> None:
-    fetch_feeds(
-        load_config()
+    arg_parser = ArgumentParser(
+        description='Python script to fetch various Reddit feeds in respect to their ridiculous rate limit'
     )
+
+    arg_parser.add_argument(
+        '-o', '--opml',
+        help='Output OPML file instead of fetching feeds',
+        action='store_true'
+    )
+
+    args = arg_parser.parse_args()
+
+    config = load_config()
+
+    if args.opml:
+        generate_opml(config)
+    else:
+        fetch_feeds(config)
 
 
 if __name__ == '__main__':

@@ -23,13 +23,19 @@ that script (look ma, no dependencies!).
 
 ## Configuration
 
+### This script
+
 Configuration happens through the `config.toml` file, which **must** be located next to `fetch.py`. You will find an
 example configuration file (`config.example.toml`) to start with, everything is explained there.
 
+### The web server
+
 Your web server (or its virtual host) must point its root directory to the `public` folder which is automatically created
-next to `fetch.py`. Make sure it correctly serve Atom (`*.atom`) files with proper MIME types.
+next to `fetch.py`. Make sure it correctly serve Atom (`*.atom`) and OPML (`*.opml`) files with proper MIME types.
 
 ## Usage
+
+### Fetching feeds
 
 This project consists of one Python script, `fetch.py`, which should be invoked at a regular interval (typically using a
 job scheduler like cron). It will download and save each configured feed into the `public` folder, while respecting the
@@ -38,11 +44,13 @@ rate limit.
 For example, fetch feeds every two hours:
 
 ```
-0 */2 * * * cd /path/to/the/script && ./fetch.py
+0 */2 * * * ./path/to/fetch.py
 ```
 
-Of course, don't run the scheduled job too close together: remember it'll take *one whole minute* to download *each*
-feed. So given you want to subscribe to 15 subs, that will take a whopping 15 minutes.
+Of course, don't run the scheduled job at short intervals: remember it'll take *one whole minute* to download *each*
+feed. So given you want to subscribe to 15 feeds, that will take a whopping 15 minutes.
+
+### Subscribing to feeds
 
 You can then subscribe to these feeds using your usual feed reader. They are saved using the following path patterns
 (remember it's served from the `public` folder):
@@ -51,4 +59,8 @@ You can then subscribe to these feeds using your usual feed reader. They are sav
   - Users: `https://your.site/users/{username}.atom`
   - Domains: `https://your.site/domains/{domain name}.atom`
 
-Plain old static files: that's all we need.
+
+### Generate OPML file
+
+You can generate an OPML file so you can subscribe to all of the feeds at once: `./fetch.py --opml`. It's saved in
+`public/feeds.opml`.
