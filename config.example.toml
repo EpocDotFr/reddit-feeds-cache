@@ -1,5 +1,9 @@
 # ----------------------------------------------------------------
-# Defaults
+# General
+root_url = "https://my.site" # Used to generate absolute URLs in the OPML file when using `./fetch.py --opml`
+
+# ----------------------------------------------------------------
+# Default values
 
 [defaults]
 filter = "submitted" # Default user filter. Other values: comments

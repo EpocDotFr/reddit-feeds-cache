@@ -283,9 +283,11 @@ def generate_opml(config: Dict[str, Any]) -> None:
 
     body = etree.SubElement(root, 'body')
 
-    generate_subs_opml(body, config.get('subs', {}))
-    generate_users_opml(body, config.get('users', {}))
-    generate_domains_opml(body, config.get('domains', {}))
+    root_url = config.get('root_url', '').rstrip('/')
+
+    generate_subs_opml(body, root_url, config.get('subs', {}))
+    generate_users_opml(body, root_url, config.get('users', {}))
+    generate_domains_opml(body, root_url, config.get('domains', {}))
 
     with open(Path(__file__).parent / 'public' / 'feeds.opml', 'wb') as f:
         etree.ElementTree(root).write(
@@ -297,7 +299,7 @@ def generate_opml(config: Dict[str, Any]) -> None:
     logging.info('Done.')
 
 
-def generate_subs_opml(body: etree.Element, subs_config: Dict[str, Any]) -> None:
+def generate_subs_opml(body: etree.Element, root_url: str, subs_config: Dict[str, Any]) -> None:
     if not subs_config:
         return
 
@@ -322,11 +324,11 @@ def generate_subs_opml(body: etree.Element, subs_config: Dict[str, Any]) -> None
         sub.set('text', f'r/{sub_name}')
         sub.set('title', f'r/{sub_name}')
         sub.set('type', 'atom')
-        sub.set('xmlUrl', f'/subs/{sub_name}.atom')
+        sub.set('xmlUrl', f'{root_url}/subs/{sub_name}.atom')
         sub.set('htmlUrl', htmlUrl)
 
 
-def generate_users_opml(body: etree.Element, users_config: Dict[str, Any]) -> None:
+def generate_users_opml(body: etree.Element, root_url: str, users_config: Dict[str, Any]) -> None:
     if not users_config:
         return
 
@@ -345,7 +347,7 @@ def generate_users_opml(body: etree.Element, users_config: Dict[str, Any]) -> No
         user.set('text', f'u/{user_name}')
         user.set('title', f'u/{user_name}')
         user.set('type', 'atom')
-        user.set('xmlUrl', f'/users/{user_name}.atom')
+        user.set('xmlUrl', f'{root_url}/users/{user_name}.atom')
 
         query = {
             'sort': sort,
@@ -355,7 +357,7 @@ def generate_users_opml(body: etree.Element, users_config: Dict[str, Any]) -> No
         user.set('htmlUrl', f'https://www.reddit.com/user/{user_name}/{filter_}/?{urlencode(query)}')
 
 
-def generate_domains_opml(body: etree.Element, domains_config: Dict[str, Any]) -> None:
+def generate_domains_opml(body: etree.Element, root_url: str, domains_config: Dict[str, Any]) -> None:
     if not domains_config:
         return
 
@@ -380,7 +382,7 @@ def generate_domains_opml(body: etree.Element, domains_config: Dict[str, Any]) -
         sub.set('text', f'domain/{domain_name}')
         sub.set('title', f'domain/{domain_name}')
         sub.set('type', 'atom')
-        sub.set('xmlUrl', f'/domains/{domain_name}.atom')
+        sub.set('xmlUrl', f'{root_url}/domains/{domain_name}.atom')
         sub.set('htmlUrl', htmlUrl)
 
 
