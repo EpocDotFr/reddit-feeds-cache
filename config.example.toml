@@ -1,6 +1,7 @@
 # ----------------------------------------------------------------
 # General
-root_url = "https://my.site" # Used to generate absolute URLs in the OPML file when using `./fetch.py --opml`
+root_url = "https://my.site" # Used to generate absolute URLs in the OPML file when using `./fetch.py --opml`. Defaults to ''
+output_dir = "dist" # Absolute or relative path to the output directory (defaults to "public"). Relative paths are relative to the fetch.py script
 
 # ----------------------------------------------------------------
 # Default values

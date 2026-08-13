@@ -62,6 +62,11 @@ def load_config() -> Dict[str, Any]:
 
         exit(1)
 
+    config['output_dir'] = Path(config.get('output_dir', 'public'))
+
+    if not config['output_dir'].is_absolute():
+        config['output_dir'] = (Path(__file__).parent / config['output_dir']).resolve()
+
     defaults = {
         'filter': config.get('defaults', {}).get('filter', 'submitted'),
         'sort': config.get('defaults', {}).get('sort', 'best'),
@@ -155,14 +160,14 @@ def load_config() -> Dict[str, Any]:
 def fetch_feeds(config: Dict[str, Any]) -> None:
     logging.info('Fetching feeds...')
 
-    fetch_subs_feed(config.get('subs', {}))
-    fetch_users_feed(config.get('users', {}))
-    fetch_domains_feed(config.get('domains', {}))
+    fetch_subs_feed(config.get('subs', {}), config.get('output_dir'))
+    fetch_users_feed(config.get('users', {}), config.get('output_dir'))
+    fetch_domains_feed(config.get('domains', {}), config.get('output_dir'))
 
     logging.info('Done.')
 
 
-def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
+def fetch_subs_feed(subs_config: Dict[str, Any], output_dir: Path) -> None:
     if not subs_config:
         return
 
@@ -174,12 +179,12 @@ def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
 
         download_feed(
             f'r/{sub_name}/{sort}',
-            Path('subs') / f'{sub_name}.atom',
+            output_dir / 'subs' / f'{sub_name}.atom',
             {'t': str(top_interval)} if sort == Sort.Top else None
         )
 
 
-def fetch_users_feed(users_config: Dict[str, Any]) -> None:
+def fetch_users_feed(users_config: Dict[str, Any], output_dir: Path) -> None:
     if not users_config:
         return
 
@@ -197,12 +202,12 @@ def fetch_users_feed(users_config: Dict[str, Any]) -> None:
 
         download_feed(
             f'user/{user_name}/{filter_}',
-            Path('users') / f'{user_name}.atom',
+            output_dir / 'users' / f'{user_name}.atom',
             query
         )
 
 
-def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
+def fetch_domains_feed(domains_config: Dict[str, Any], output_dir: Path) -> None:
     if not domains_config:
         return
 
@@ -214,13 +219,12 @@ def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
 
         download_feed(
             f'domains/{domain_name}/{sort}',
-            Path('domains') / f'{domain_name}.atom',
+            output_dir / 'domains' / f'{domain_name}.atom',
             {'t': str(top_interval)} if sort == Sort.Top else None
         )
 
 
 def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] = None) -> None:
-    destination = Path(__file__).parent / 'public' / destination
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     url = f'https://www.reddit.com/{path}.rss'
@@ -284,12 +288,15 @@ def generate_opml(config: Dict[str, Any]) -> None:
     body = etree.SubElement(root, 'body')
 
     root_url = config.get('root_url', '').rstrip('/')
+    output_dir = config.get('output_dir')
+
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     generate_subs_opml(body, root_url, config.get('subs', {}))
     generate_users_opml(body, root_url, config.get('users', {}))
     generate_domains_opml(body, root_url, config.get('domains', {}))
 
-    with open(Path(__file__).parent / 'public' / 'feeds.opml', 'wb') as f:
+    with open(output_dir / 'feeds.opml', 'wb') as f:
         etree.ElementTree(root).write(
             f,
             encoding='utf-8',
