@@ -51,7 +51,7 @@ def load_config() -> Dict[str, Any]:
     logging.info('Loading configuration...')
 
     try:
-        with open('config.example.toml', 'rb') as f:
+        with open(Path(__file__).parent / 'config.example.toml', 'rb') as f:
             return tomllib.load(f)
     except FileNotFoundError:
         logging.critical('config.toml not found, aborting.')
@@ -76,6 +76,9 @@ def fetch_subs_feed(subs_config: Dict[str, Any]) -> None:
     for sub_name, sub_parameters in subs_config.items():
         try:
             sort = Sort(sub_parameters.get('sort', Sort.Best))
+
+            if not sort.valid_for_sub():
+                raise ValueError
         except ValueError:
             logging.error(f'{sub_name}: invalid "sort" value')
 
@@ -103,7 +106,7 @@ def fetch_users_feed(users_config: Dict[str, Any]) -> None:
 
     for user_name, user_parameters in users_config.items():
         try:
-            filter_ = Sort(user_parameters.get('filter', UserFilter.Submitted))
+            filter_ = UserFilter(user_parameters.get('filter', UserFilter.Submitted))
         except ValueError:
             logging.error(f'{user_name}: invalid "filter" value')
 
@@ -111,6 +114,9 @@ def fetch_users_feed(users_config: Dict[str, Any]) -> None:
 
         try:
             sort = Sort(user_parameters.get('sort', Sort.Best))
+
+            if not sort.valid_for_user():
+                raise ValueError
         except ValueError:
             logging.error(f'{user_name}: invalid "sort" value')
 
@@ -139,6 +145,9 @@ def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
     for domain_name, domain_parameters in domains_config.items():
         try:
             sort = Sort(domain_parameters.get('sort', Sort.Best))
+
+            if not sort.valid_for_domain():
+                raise ValueError
         except ValueError:
             logging.error(f'{domain_name}: invalid "sort" value')
 
@@ -159,7 +168,7 @@ def fetch_domains_feed(domains_config: Dict[str, Any]) -> None:
 
 
 def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] = None) -> None:
-    destination = 'public' / destination
+    destination = Path(__file__).parent / 'public' / destination
     destination.parent.mkdir(parents=True, exist_ok=True)
 
     url = f'https://www.reddit.com/{path}.rss'
@@ -186,10 +195,10 @@ def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] 
         logging.error(e)
 
         if e.status == 429:
-            logging.critical('Got rate-limited anyway, aborting goddamn.')
+            logging.critical('Got rate-limited anyway, aborting dammit.')
 
             exit(1)
-        if e.status == 404:
+        elif e.status == 404:
             logging.error('Feed not found.')
 
             return
