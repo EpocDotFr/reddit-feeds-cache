@@ -12,6 +12,7 @@ from time import sleep
 import tomllib
 import logging
 import enum
+import sys
 
 logging.basicConfig(level=logging.INFO)
 
@@ -60,7 +61,7 @@ def load_config() -> Dict[str, Any]:
     except FileNotFoundError:
         logging.critical('config.toml not found, aborting.')
 
-        exit(1)
+        sys.exit(1)
 
     config['output_dir'] = Path(config.get('output_dir', 'public'))
 
@@ -251,7 +252,7 @@ def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] 
         if e.status == 429:
             logging.critical('Got rate-limited anyway, aborting dammit.')
 
-            exit(1)
+            sys.exit(1)
         else:
             logging.error(e)
 
@@ -262,7 +263,7 @@ def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] 
     except KeyboardInterrupt:
         logging.critical('Aborted')
 
-        exit(1)
+        sys.exit(1)
 
 
 def generate_opml(config: Dict[str, Any]) -> None:
