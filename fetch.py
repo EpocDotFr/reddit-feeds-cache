@@ -252,18 +252,8 @@ def download_feed(path: str, destination: Path, query: Optional[Dict[str, Any]] 
             logging.critical('Got rate-limited anyway, aborting dammit.')
 
             exit(1)
-        elif e.status == 404:
-            logging.error('Feed not found.')
-
-            return
-        elif 'application/atom+xml' not in e.headers.get('Content-Type', ''):
-            logging.error('Did not get an Atom file.')
-
-            return
         else:
             logging.error(e)
-
-            return
 
     logging.info('Sleeping for 60 seconds (sigh)...')
 
